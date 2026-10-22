@@ -1,12 +1,10 @@
 [![Varbase](https://raw.githubusercontent.com/Vardot/varbase/11.0.x/images/varbase-logo.png)](https://www.drupal.org/project/varbase)
 
 # Varbase AI SEO
-[![CI](https://github.com/Vardot/varbase_ai_seo/actions/workflows/ci.yml/badge.svg?branch=1.0.x)](https://github.com/Vardot/varbase_ai_seo/actions/workflows/ci.yml)
-[![Varbase AI SEO](https://img.shields.io/badge/Varbase%20AI%20SEO-1.0.x--dev-0d6efc?labelColor=001d38&style=flat-square)](https://github.com/Vardot/varbase_ai_seo/tree/1.0.x)
+[![Varbase AI SEO](https://img.shields.io/badge/Varbase%20AI%20SEO-1.0.x--dev-0d6efc?labelColor=001d38&style=flat-square)](https://www.drupal.org/project/varbase_ai_seo)
 
-A private, **opt-in** Drupal recipe that generates the **SEO title** and **SEO description** of Blog posts and
+An **opt-in** Drupal recipe that generates the **SEO title** and **SEO description** of Blog posts and
 Utility pages with AI: when a node is saved, and in bulk over existing content.
-Its context-aware sibling is [Varbase AI Image Alt Context Base](https://github.com/Vardot/varbase_ai_image_alt_context_base).
 
 On Varbase those two fields already drive every text meta tag through
 `metatag.metatag_defaults.node` (from `varbase_seo_base`):
@@ -93,8 +91,7 @@ fills on save instead.
 
 ## Context-aware
 
-This recipe and [Varbase AI Image Alt Context Base](https://github.com/Vardot/varbase_ai_image_alt_context_base)
-are the Varbase AI "context-aware" pair: both make an AI feature that sits outside the agent pipeline follow the
+This recipe is "context-aware": it makes an AI feature that sits outside the agent pipeline follow the
 site's AI Context (Context Control Center: brand, editorial, safety).
 
 Testing found that this context reaches only callers that ask for it. The same applies here: on `ai_context`
@@ -136,11 +133,8 @@ the recipe.
 ## Install and apply
 
 ```bash
-# The repository is private, so Composer clones it over SSH.
-ddev auth ssh
-ddev composer config repositories.varbase_ai_seo vcs git@github.com:Vardot/varbase_ai_seo.git
-ddev composer config --json extra.drupal-recipe-unpack.ignore '["vardot/varbase_ai_seo"]'
-ddev composer require vardot/varbase_ai_seo:1.0.x-dev --prefer-source
+ddev composer config --json extra.drupal-recipe-unpack.ignore '["drupal/varbase_ai_seo"]'
+ddev composer require drupal/varbase_ai_seo:1.0.x-dev
 
 # Recipes do not enforce config dependencies, so check the fields exist first.
 ddev drush eval 'var_dump((bool) \Drupal\field\Entity\FieldConfig::loadByName("node", "blog", "field_seo_title"));'
@@ -149,19 +143,18 @@ ddev drush recipe ../recipes/varbase_ai_seo
 ddev drush cr
 ```
 
-Use `~1.0.0` instead of `1.0.x-dev` once a release is tagged. Re-applying is safe. When the project already ignores
+Re-applying is safe. When the project already ignores
 other packages for recipe unpack, add to that list rather than replacing it.
 
 ## Automated testing
 
-`.github/workflows/ci.yml` runs on every pull request, every push to `1.0.x` and every tag: lint (composer, YAML, no
-PHP file), then a Varbase 11 site installed from Varbase Starter on MariaDB 11.8 that applies the recipe twice and
-checks, inline and with no AI key: the modules, the four automators, the ECA model enabled and depending on
-`node.type.blog` and `node.type.page` (the second apply failed the strict comparison until those were declared), the
-view and its route, the two permissions, and the guard: an empty-body Blog post and Utility page save with empty SEO
-fields. Then the functional tests in `tests/features` (Playwright + Cucumber through `@vardot/varbase-e2e`).
+GitLab CI on [git.drupalcode.org](https://git.drupalcode.org/project/varbase_ai_seo) (`.gitlab-ci.yml`) runs on every merge
+request and every push to `1.0.x`, like the other Varbase AI recipes: `composer validate` and a lint of every YAML
+file.
 
-There is no model key in CI, so the generation checks below are **local only**.
+The functional tests in `tests/features` (Playwright and Cucumber through
+[`@vardot/varbase-e2e`](https://www.npmjs.com/package/@vardot/varbase-e2e)) run against a site of your own:
+`yarn install`, then `LAUNCH_URL=https://your-site.ddev.site yarn test`.
 
 ## Checked
 
@@ -187,8 +180,7 @@ site, and the four Vardot site templates.
 
 | Recipe | What it does |
 |---|---|
-| [Varbase AI Image Alt Context Base](https://github.com/Vardot/varbase_ai_image_alt_context_base) | AI image alt text that follows the site's AI Context. |
-| [Varbase AI Content Review Base](https://github.com/Vardot/varbase_ai_content_review_base) | AI review agents for editorial quality and brand voice. |
+| [Varbase AI Content Review Base](https://www.drupal.org/project/varbase_ai_content_review_base) | AI review agents for editorial quality and brand voice. |
 
 ## License
 

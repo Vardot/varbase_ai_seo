@@ -14,7 +14,7 @@
         "Metatag"
     ],
     "license": "GPL-2.0-or-later",
-    "homepage": "https://github.com/Vardot/varbase_ai_seo",
+    "homepage": "https://www.drupal.org/project/varbase_ai_seo",
     "authors": [
         {
             "name": "Vardot",
@@ -23,8 +23,8 @@
         }
     ],
     "support": {
-        "issues": "https://github.com/Vardot/varbase_ai_seo/issues",
-        "source": "https://github.com/Vardot/varbase_ai_seo"
+        "issues": "https://www.drupal.org/project/issues/varbase_ai_seo",
+        "source": "https://git.drupalcode.org/project/varbase_ai_seo"
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
