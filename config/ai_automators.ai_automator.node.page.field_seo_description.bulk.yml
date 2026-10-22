@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.page.field_seo_description
+id: node.page.field_seo_description.bulk
+label: 'SEO description (page, bulk)'
+rule: llm_simple_string_long
+input_mode: token
+weight: 100
+worker_type: action
+entity_type: node
+bundle: page
+field_name: field_seo_description
+edit_mode: false
+base_field: ''
+prompt: ''
+token: "You write the SEO meta description for a page on [site:name].\n\nPage title: [node:title]\nPage content: [node:field_content]\n\nWrite one meta description that tells a searcher what this page gives them.\n\nRules:\n- Between 140 and 155 characters. Never longer than 160.\n- One or two plain sentences. No quotation marks, no markdown, no emoji, no list.\n- Do not repeat the page title word for word.\n- Do not invent facts, names, numbers or dates that are not in the content above.\n- Do not use \"Learn more\", \"Click here\", \"In this article\" or similar filler.\n- Write in the language the page content is written in.\n\nReturn only the meta description, nothing else."
+guardrail_set_id: null
+plugin_config:
+  automator_enabled: true
+  automator_rule: llm_simple_string_long
+  automator_mode: token
+  automator_token: "You write the SEO meta description for a page on [site:name].\n\nPage title: [node:title]\nPage content: [node:field_content]\n\nWrite one meta description that tells a searcher what this page gives them.\n\nRules:\n- Between 140 and 155 characters. Never longer than 160.\n- One or two plain sentences. No quotation marks, no markdown, no emoji, no list.\n- Do not repeat the page title word for word.\n- Do not invent facts, names, numbers or dates that are not in the content above.\n- Do not use \"Learn more\", \"Click here\", \"In this article\" or similar filler.\n- Write in the language the page content is written in.\n\nReturn only the meta description, nothing else."
+  automator_prompt: ''
+  automator_base_field: ''
+  automator_edit_mode: false
+  automator_weight: 100
+  automator_worker_type: action
+  automator_ai_provider: default
+  automator_ai_model: ''
+  automator_code_block_type: ''
+  automator_label: 'SEO description (bulk)'

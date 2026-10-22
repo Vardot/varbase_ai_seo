@@ -1,0 +1,187 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.blog.field_seo_description
+    - field.field.node.blog.field_seo_title
+    - field.field.node.page.field_seo_description
+    - field.field.node.page.field_seo_title
+    - field.storage.node.field_seo_description
+    - field.storage.node.field_seo_title
+    - node.type.blog
+    - node.type.page
+  module:
+    - ai_integration_eca_automators
+    - eca_content
+    - eca_vbo
+    - modeler_api
+third_party_settings:
+  modeler_api:
+    modeler_id: fallback
+    label: 'Generate SEO meta tags'
+    documentation: 'Fills the empty SEO title and SEO description of a Blog post or Utility page with AI: on save, in bulk, or when the generate_seo_metatags event is fired for it. Every path is guarded: a node with an empty body is skipped rather than given a meta title invented from its title alone. Written by hand, not drawn: it has no BPMN diagram, which is why it uses the fallback modeler.'
+    version: 1.0.0
+id: varbase_ai_seo_generate_metatags
+weight: 0
+template: null
+events:
+  event_presave_blog:
+    plugin: 'content_entity:presave'
+    label: 'On save: Blog post'
+    configuration:
+      type: 'node blog'
+    successors:
+      -
+        id: presave_blog_title
+        condition: condition_has_content
+  event_presave_page:
+    plugin: 'content_entity:presave'
+    label: 'On save: Utility page'
+    configuration:
+      type: 'node page'
+    successors:
+      -
+        id: presave_page_title
+        condition: condition_has_content
+  event_request:
+    plugin: 'content_entity:custom'
+    label: 'SEO meta tag generation requested'
+    configuration:
+      event_id: generate_seo_metatags
+    successors:
+      -
+        id: gateway_bundle
+        condition: condition_has_content
+  event_bulk:
+    plugin: 'vbo:execute'
+    label: 'Bulk: Generate SEO meta tags'
+    configuration:
+      operation_name: 'Generate SEO meta tags'
+      view_id: ''
+      display_id: ''
+    successors:
+      -
+        id: gateway_bundle
+        condition: condition_has_content
+conditions:
+  condition_has_content:
+    plugin: eca_entity_field_value_empty
+    label: 'Body is not empty'
+    configuration:
+      negate: true
+      field_name: field_content
+      entity: ''
+  condition_is_blog:
+    plugin: eca_entity_type_bundle
+    label: 'Is a Blog post'
+    configuration:
+      negate: false
+      type: 'node blog'
+      entity: ''
+  condition_is_page:
+    plugin: eca_entity_type_bundle
+    label: 'Is a Utility page'
+    configuration:
+      negate: false
+      type: 'node page'
+      entity: ''
+gateways:
+  gateway_bundle:
+    label: 'Which content type?'
+    type: 0
+    successors:
+      -
+        id: action_blog_title
+        condition: condition_is_blog
+      -
+        id: action_page_title
+        condition: condition_is_page
+actions:
+  action_blog_title:
+    label: 'Blog: generate SEO title'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.blog.field_seo_title.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: action_blog_description
+        condition: ''
+  action_blog_description:
+    label: 'Blog: generate SEO description'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.blog.field_seo_description.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: action_save
+        condition: ''
+  action_page_title:
+    label: 'Page: generate SEO title'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.page.field_seo_title.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: action_page_description
+        condition: ''
+  action_page_description:
+    label: 'Page: generate SEO description'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.page.field_seo_description.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: action_save
+        condition: ''
+  action_save:
+    label: 'Save the node once'
+    plugin: eca_save_entity
+    configuration:
+      object: ''
+    successors: {  }
+  presave_blog_title:
+    label: 'On save, Blog: generate SEO title'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.blog.field_seo_title.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: presave_blog_description
+        condition: ''
+  presave_blog_description:
+    label: 'On save, Blog: generate SEO description'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.blog.field_seo_description.bulk
+      overwrite: false
+      save_entity: false
+    successors: {  }
+  presave_page_title:
+    label: 'On save, Page: generate SEO title'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.page.field_seo_title.bulk
+      overwrite: false
+      save_entity: false
+    successors:
+      -
+        id: presave_page_description
+        condition: ''
+  presave_page_description:
+    label: 'On save, Page: generate SEO description'
+    plugin: eca_ai_automator
+    configuration:
+      automator: node.page.field_seo_description.bulk
+      overwrite: false
+      save_entity: false
+    successors: {  }

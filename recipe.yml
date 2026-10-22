@@ -1,0 +1,53 @@
+name: 'Varbase AI SEO'
+description: 'Generates the SEO title and SEO description of Blog posts and Utility pages with AI, on save and in bulk. The two fields already drive the meta title, meta description, Open Graph and Twitter card tags through the Varbase metatag defaults.'
+type: 'Varbase AI'
+
+# PREREQUISITES, not listed under "recipes:" on purpose. This recipe does NOT
+# add content types and does not require the recipes that do.
+# - node.type.blog / node.type.page with field_seo_title and
+#   field_seo_description, already on the site from its Varbase install.
+# - metatag.metatag_defaults.node mapping those fields to the tags:
+#   varbase_seo_base.
+# - a default chat provider in ai.settings (varbase_ai_base).
+# A Varbase 11 install has all of them. Nesting them here would re-apply the
+# Varbase base recipes on every site this lands on, and one drifted form display
+# (media.audio.bulk_upload is a known one) would abort the whole apply.
+#
+# Recipes do not enforce config dependencies: on a site without those fields
+# this recipe still reports success and does nothing useful. Check first:
+#   drush eval 'var_dump((bool) \Drupal\field\Entity\FieldConfig::loadByName("node", "blog", "field_seo_title"));'
+
+install:
+  - ai
+  - ai_automators
+  - ai_integration_eca
+  - ai_integration_eca_automators
+  - eca
+  - eca_content
+  - eca_vbo
+  - metatag
+  - modeler_api
+  - node
+  - views
+  - views_bulk_operations
+
+config:
+  # Compare strictly only the config this recipe owns. Fields, form displays
+  # and metatag defaults belong to the Varbase base recipes.
+  strict:
+    - ai_automators.ai_automator.node.blog.field_seo_title.bulk
+    - ai_automators.ai_automator.node.blog.field_seo_description.bulk
+    - ai_automators.ai_automator.node.page.field_seo_title.bulk
+    - ai_automators.ai_automator.node.page.field_seo_description.bulk
+    - eca.eca.varbase_ai_seo_generate_metatags
+    - views.view.varbase_ai_seo
+  actions:
+    # The editors who own SEO can tune the prompts. Generation itself needs no
+    # permission: the ECA model runs on any save of a Blog post or Utility
+    # page, and the bulk screen is gated by "access content overview".
+    user.role.site_admin:
+      grantPermissions:
+        - 'administer ai_automator'
+    user.role.seo_admin:
+      grantPermissions:
+        - 'administer ai_automator'

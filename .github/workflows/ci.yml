@@ -1,0 +1,312 @@
+# Continuous integration for the Varbase AI SEO recipe.
+#
+# The repository is private, so this runs on GitHub Actions rather than the
+# drupal.org GitLab templates the public Varbase recipes use. Two jobs:
+#
+#   lint    composer.json, every YAML file, and no PHP file in the recipe.
+#   recipe  a real Varbase 11 site, built as Vardot's public recipe CI builds
+#           one (drupal/varbase_project 11.0.x-dev, installed from Varbase
+#           Starter). Require this checkout, apply the recipe twice (it must be
+#           safe to re-apply) and check it without an AI key: the automators,
+#           the ECA model and its dependencies, the bulk screen, and the guard
+#           that leaves an empty-body node's SEO fields empty. Then it serves the
+#           site and runs the functional suite in tests/features (Playwright +
+#           Cucumber through @vardot/varbase-e2e) in Chromium. The checks that
+#           need a real model run locally only (see README, Checked).
+
+name: CI
+
+on:
+  push:
+    branches: ['1.0.x']
+    tags: ['*']
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PHP_VERSION: '8.4'
+  DRUPAL_CORE: '~11.4.0'
+  RECIPE: varbase_ai_seo
+  PACKAGE: vardot/varbase_ai_seo
+  COMPOSER_NO_INTERACTION: '1'
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          tools: composer:v2
+          coverage: none
+
+      - name: Validate composer.json
+        run: composer validate --no-check-all --no-check-publish
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Lint YAML
+        run: |
+          pip install --quiet pyyaml
+          python3 - <<'PY'
+          import glob, sys, yaml
+          files = sorted(set(glob.glob('**/*.yml', recursive=True) + glob.glob('**/*.yaml', recursive=True) + glob.glob('.github/**/*.yml', recursive=True)))
+          bad = 0
+          for f in files:
+              try:
+                  list(yaml.safe_load_all(open(f, encoding='utf-8')))
+              except Exception as e:
+                  print(f'::error file={f}::{e}')
+                  bad += 1
+          print(f'{len(files)} YAML files checked, {bad} with errors')
+          sys.exit(1 if bad else 0)
+          PY
+
+      - name: No PHP in the recipe
+        run: |
+          # A recipe ships config only: no .php, .module, .install or .inc file.
+          found=$(find . -path ./.git -prune -o -path ./vendor -prune -o -path ./node_modules -prune -o -type f \( -name '*.php' -o -name '*.module' -o -name '*.install' -o -name '*.inc' \) -print)
+          if [ -n "$found" ]; then echo "::error::PHP files found: $found"; exit 1; fi
+          echo 'No PHP files.'
+
+  recipe:
+    name: Apply on a Varbase 11 site (Varbase Starter)
+    needs: lint
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      # A throw-away test site. Composer 2.9 refuses packages with open security
+      # advisories, and since 8 October 2026 every enshrined/svg-sanitize release,
+      # which Varbase Media Base needs through svg_image, has one. Production
+      # sites decide on advisories themselves; this site only has to build.
+      COMPOSER_NO_SECURITY_BLOCKING: '1'
+    services:
+      mariadb:
+        image: mariadb:11.8
+        env:
+          MARIADB_ROOT_PASSWORD: root
+          MARIADB_DATABASE: drupal
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=5s --health-timeout=5s --health-retries=30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: recipe
+
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: gd, pdo_mysql, mysqli, mbstring, intl, zip, bcmath, opcache, pcntl
+          # As a served site runs: assertions off (Vardot's recipe CI does the
+          # same, for an upstream SDC prop mismatch in media rendering).
+          ini-values: memory_limit=-1, zend.assertions=-1
+          tools: composer:v2
+          coverage: none
+
+      - name: Cache Composer downloads
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/composer
+          key: composer-varbase-${{ runner.os }}-${{ env.PHP_VERSION }}-${{ hashFiles('recipe/composer.json') }}
+          restore-keys: composer-varbase-${{ runner.os }}-${{ env.PHP_VERSION }}-
+
+      - name: Build a Varbase 11 site that requires this checkout
+        run: |
+          # The Varbase project template, as Vardot's public recipe CI uses it,
+          # with Varbase's curated patches. Retried: drupal.org clones can reset.
+          for i in 1 2 3; do
+            composer create-project drupal/varbase_project:11.0.x-dev site --no-install --no-interaction --no-scripts --ignore-platform-req=ext-pgsql && break
+            echo "create-project attempt $i failed, retrying"; rm -rf site; sleep 20
+          done
+          cd site
+          # Temporary pin. vardot/varbase-patches 11.0.48 (8 October 2026) re-rolled
+          # the tagify #3555084 patch (MR 270) against a base no tagify release
+          # matches, so composer-patches, which uses git apply, cannot apply it
+          # to tagify 1.2.53, 1.2.54 or 1.2.55. 11.0.47's patch (MR 177) applies
+          # to tagify up to 1.2.54. Drop both pins once the patch is re-rolled.
+          composer require --no-update vardot/varbase-patches:11.0.47 drupal/tagify:1.2.54
+          composer config minimum-stability dev
+          composer config repositories.recipe "{\"type\": \"path\", \"url\": \"../recipe\", \"options\": {\"symlink\": false, \"versions\": {\"${PACKAGE}\": \"1.0.x-dev\"}}}"
+          composer config --json extra.drupal-recipe-unpack.ignore "[\"${PACKAGE}\"]"
+          # Twig stays below 3.30, which
+          # breaks the cva module Varbase uses (as Vardot's recipe CI pins it).
+          for i in 1 2 3; do
+            composer require "${PACKAGE}:1.0.x-dev" "twig/twig:<3.30" -W --no-interaction --ignore-platform-req=ext-pgsql && break
+            echo "require attempt $i failed, retrying"; sleep 15
+          done
+          test -d web/core
+          composer show --no-ansi | grep -E 'drupal/(core|canvas|ai|ai_automators|ai_integration_eca|eca|eca_vbo|metatag|varbase_ai_base|varbase_seo_base|varbase_starter|vartheme_bs5) |vardot/|twig/twig |drupal/tagify '
+
+      - name: Patch core 2741429, as Vardot's recipe CI does
+        working-directory: site
+        run: |
+          # A guard for a NULL view mode in EntityDisplayBase that a Varbase
+          # install can hit before vardot/varbase-patches is active.
+          curl -fsSL -o /tmp/2741429.patch "https://raw.githubusercontent.com/Vardot/drupal-core-patches/refs/heads/patches/drupal-core--2026-07-02--2741429--entitydisplaybase-null-mode-entity.patch"
+          if patch -p1 -d web --forward --dry-run < /tmp/2741429.patch; then
+            patch -p1 -d web --forward < /tmp/2741429.patch
+          else
+            echo "core 2741429 already applied"
+          fi
+
+      - name: Install Varbase Starter
+        working-directory: site
+        run: |
+          bin/drush site:install "$PWD/recipes/varbase_starter" --db-url=mysql://root:root@127.0.0.1:3306/drupal \
+            --account-name=admin --account-pass=admin --site-name="Recipe CI" --locale=en -y
+          bin/drush cr
+
+      - name: Apply the recipe
+        working-directory: site
+        run: |
+          bin/drush recipe "$PWD/recipes/${RECIPE}"
+          bin/drush cr
+
+      - name: Apply the recipe again
+        working-directory: site
+        run: bin/drush recipe "$PWD/recipes/${RECIPE}"
+
+      - name: Check the recipe without an AI key
+        working-directory: site
+        run: |
+          # The checks run inline: the recipe ships no PHP file. Each prints PASS, FAIL or
+          # INFO, then RESULT, and a failure throws so that drush exits non-zero.
+          bin/drush php:eval "$(cat <<'PHP'
+          use Drupal\node\Entity\Node;
+          use Drupal\user\Entity\Role;
+
+          $failed = FALSE;
+          $check = function (string $label, bool $ok, string $detail = '') use (&$failed): void {
+            if (!$ok) {
+              $failed = TRUE;
+            }
+            echo sprintf("%-4s %s%s\n", $ok ? 'PASS' : 'FAIL', $label, $detail !== '' ? " ($detail)" : '');
+          };
+          $etm = \Drupal::entityTypeManager();
+
+          foreach (['ai', 'ai_automators', 'ai_integration_eca', 'ai_integration_eca_automators', 'eca', 'eca_content', 'eca_vbo', 'metatag', 'modeler_api', 'views_bulk_operations'] as $module) {
+            $check("module $module enabled", \Drupal::moduleHandler()->moduleExists($module));
+          }
+
+          foreach (['blog', 'page'] as $bundle) {
+            foreach (['field_seo_title', 'field_seo_description'] as $field) {
+              $id = "node.$bundle.$field.bulk";
+              $automator = $etm->getStorage('ai_automator')->load($id);
+              $check("automator $id exists", $automator !== NULL);
+              if ($automator) {
+                $check("automator $id is an action worker", $automator->get('worker_type') === 'action', (string) $automator->get('worker_type'));
+              }
+            }
+          }
+
+          $model = $etm->getStorage('eca')->load('varbase_ai_seo_generate_metatags');
+          $check('ECA model varbase_ai_seo_generate_metatags exists', $model !== NULL);
+          if ($model) {
+            $check('ECA model is enabled', (bool) $model->status());
+            $deps = $model->getDependencies()['config'] ?? [];
+            // Without these the second apply failed the strict config comparison.
+            $check('ECA model depends on node.type.blog and node.type.page',
+              in_array('node.type.blog', $deps, TRUE) && in_array('node.type.page', $deps, TRUE), implode(', ', $deps));
+          }
+
+          $view = $etm->getStorage('view')->load('varbase_ai_seo');
+          $check('view varbase_ai_seo exists and is enabled', $view !== NULL && $view->status());
+          $route = \Drupal::service('router.route_provider')->getRoutesByPattern('/admin/content/ai-seo-metatags');
+          $check('the bulk screen route exists', count($route) > 0);
+
+          foreach (['site_admin', 'seo_admin'] as $rid) {
+            $role = Role::load($rid);
+            $check("$rid can administer the automators", $role !== NULL && $role->hasPermission('administer ai_automator'));
+          }
+
+          // The guard: a node with an empty body gets no invented SEO copy. No AI key here,
+          // so a filled field could only come from somewhere else; an empty one must stay empty.
+          foreach (['page', 'blog'] as $bundle) {
+            $node = Node::create(['type' => $bundle, 'title' => "CI empty $bundle", 'uid' => 1, 'status' => 0]);
+            $node->save();
+            $node = Node::load($node->id());
+            $check("an empty-body $bundle save leaves the SEO fields empty",
+              $node->get('field_seo_title')->isEmpty() && $node->get('field_seo_description')->isEmpty());
+            $node->delete();
+          }
+
+          // Not a check: what happens on a save that passes the guard with no AI provider.
+          // The LLM checks themselves are local-only (README, Checked).
+          try {
+            $node = Node::create(['type' => 'page', 'title' => 'CI page with a body', 'uid' => 1, 'status' => 0,
+              'field_content' => ['value' => '<p>A short page about planting trees in spring.</p>', 'format' => 'full_html']]);
+            $node->save();
+            $node = Node::load($node->id());
+            echo 'INFO a page with a body and no AI provider saved; SEO title ' . ($node->get('field_seo_title')->isEmpty() ? 'empty' : 'filled') . "\n";
+            $node->delete();
+          }
+          catch (\Throwable $e) {
+            echo 'INFO a page with a body and no AI provider did not save: ' . $e->getMessage() . "\n";
+          }
+
+          echo $failed ? "RESULT: FAIL\n" : "RESULT: PASS\n";
+          if ($failed) {
+            throw new \RuntimeException('One or more checks failed.');
+          }
+          PHP
+          )"
+
+      - name: Serve the site for the functional tests
+        working-directory: site
+        run: |
+          # The Webmaster in cucumber.shared.js is uid 1.
+          bin/drush php:eval '$u = \Drupal\user\Entity\User::load(1); $u->setUsername("webmaster"); $u->setEmail("webmaster@example.test"); $u->setPassword("dD.123123ddd"); $u->save();'
+          # Headless test prep, as Vardot's recipe CI does on Varbase sites.
+          bin/drush pm:uninstall antibot big_pipe seckit -y || true
+          bin/drush config:set system.performance css.preprocess 0 -y
+          bin/drush config:set system.performance js.preprocess 0 -y
+          bin/drush cr
+          # Drupal expects the docroot as the working directory: from anywhere else
+          # plugin discovery finds nothing and every page is a 500.
+          (cd web && PHP_CLI_SERVER_WORKERS=8 nohup php -S 127.0.0.1:8080 .ht.router.php > /tmp/php-server.log 2>&1 &)
+          for i in $(seq 1 30); do curl -sf -o /dev/null http://127.0.0.1:8080/user/login && break; sleep 2; done
+          curl -s -o /dev/null -w 'user/login: HTTP %{http_code}\n' http://127.0.0.1:8080/user/login
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Run the functional tests (Playwright + Cucumber)
+        working-directory: recipe
+        env:
+          LAUNCH_URL: http://127.0.0.1:8080
+        run: |
+          echo "nodeLinker: node-modules" > .yarnrc.yml
+          corepack enable
+          # varbase-e2e's postinstall can rewrite cucumber.js; keep ours.
+          cp cucumber.js /tmp/cucumber.js.bak
+          yarn install
+          cp /tmp/cucumber.js.bak cucumber.js
+          ./node_modules/.bin/playwright install --with-deps chromium
+          yarn test
+
+      - name: Keep the test reports and screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: functional-tests
+          path: |
+            recipe/tests/reports/
+            recipe/tests/screenshots/
+            /tmp/php-server.log
+          if-no-files-found: ignore

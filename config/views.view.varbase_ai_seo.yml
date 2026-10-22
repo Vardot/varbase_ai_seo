@@ -1,0 +1,411 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.storage.node.field_seo_description
+    - field.storage.node.field_seo_title
+    - node.type.blog
+    - node.type.page
+  module:
+    - node
+    - user
+    - views_bulk_operations
+id: varbase_ai_seo
+label: 'AI SEO meta tags'
+module: views
+description: 'Find content whose SEO title or SEO description is missing and generate them in bulk with AI.'
+tag: varbase
+base_table: node_field_data
+base_field: nid
+display:
+  default:
+    id: default
+    display_title: Default
+    display_plugin: default
+    position: 0
+    display_options:
+      title: 'AI SEO meta tags'
+      fields:
+        views_bulk_operations_bulk_form:
+          id: views_bulk_operations_bulk_form
+          table: views
+          field: views_bulk_operations_bulk_form
+          entity_type: null
+          plugin_id: views_bulk_operations_bulk_form
+          label: Generate
+          batch: true
+          batch_size: 1
+          form_step: true
+          ajax_loader: true
+          buttons: false
+          action_title: Action
+          clear_on_exposed: true
+          show_multipage_selection_box: default
+          show_select_all: default
+          selected_actions:
+            -
+              action_id: 'eca_vbo_execute:generate_seo_meta_tags'
+              preconfiguration:
+                add_confirmation: false
+                label_override: 'AI: SEO title and description (guarded)'
+            -
+              action_id: 'ai_automators_run:node.blog.field_seo_title.bulk'
+              preconfiguration:
+                add_confirmation: false
+                label_override: ''
+            -
+              action_id: 'ai_automators_run:node.blog.field_seo_description.bulk'
+              preconfiguration:
+                add_confirmation: false
+                label_override: ''
+            -
+              action_id: 'ai_automators_run:node.page.field_seo_title.bulk'
+              preconfiguration:
+                add_confirmation: false
+                label_override: ''
+            -
+              action_id: 'ai_automators_run:node.page.field_seo_description.bulk'
+              preconfiguration:
+                add_confirmation: false
+                label_override: ''
+        title:
+          id: title
+          table: node_field_data
+          field: title
+          entity_type: node
+          entity_field: title
+          plugin_id: field
+          label: Title
+          settings:
+            link_to_entity: true
+        type:
+          id: type
+          table: node_field_data
+          field: type
+          entity_type: node
+          entity_field: type
+          plugin_id: field
+          label: 'Content type'
+        langcode:
+          id: langcode
+          table: node_field_data
+          field: langcode
+          entity_type: node
+          entity_field: langcode
+          plugin_id: field
+          label: Language
+        field_seo_title:
+          id: field_seo_title
+          table: node__field_seo_title
+          field: field_seo_title
+          entity_type: node
+          entity_field: field_seo_title
+          plugin_id: field
+          label: 'SEO title'
+          empty: '— missing —'
+          hide_empty: false
+          empty_zero: false
+        field_seo_description:
+          id: field_seo_description
+          table: node__field_seo_description
+          field: field_seo_description
+          entity_type: node
+          entity_field: field_seo_description
+          plugin_id: field
+          label: 'SEO description'
+          empty: '— missing —'
+          hide_empty: false
+          empty_zero: false
+        changed:
+          id: changed
+          table: node_field_data
+          field: changed
+          entity_type: node
+          entity_field: changed
+          plugin_id: field
+          label: Updated
+          type: timestamp
+      pager:
+        type: full
+        options:
+          offset: 0
+          items_per_page: 50
+          total_pages: null
+          id: 0
+          tags:
+            next: 'Next ›'
+            previous: '‹ Previous'
+            first: '« First'
+            last: 'Last »'
+          expose:
+            items_per_page: true
+            items_per_page_label: 'Items per page'
+            items_per_page_options: '25, 50, 100'
+            items_per_page_options_all: false
+            items_per_page_options_all_label: '- All -'
+            offset: false
+            offset_label: Offset
+          quantity: 9
+      exposed_form:
+        type: basic
+        options:
+          submit_button: Filter
+          reset_button: true
+          reset_button_label: Reset
+      access:
+        type: perm
+        options:
+          perm: 'access content overview'
+      cache:
+        type: tag
+        options: {  }
+      empty:
+        area_text_custom:
+          id: area_text_custom
+          table: views
+          field: area_text_custom
+          plugin_id: text_custom
+          empty: true
+          content: 'No content matches this filter.'
+      sorts:
+        changed:
+          id: changed
+          table: node_field_data
+          field: changed
+          entity_type: node
+          entity_field: changed
+          plugin_id: date
+          order: DESC
+      filters:
+        type:
+          id: type
+          table: node_field_data
+          field: type
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: type
+          plugin_id: bundle
+          operator: in
+          value:
+            blog: blog
+            page: page
+          group: 1
+          exposed: false
+          expose:
+            operator_limit_selection: false
+            operator_list: {  }
+          is_grouped: false
+          group_info: {  }
+        status:
+          id: status
+          table: node_field_data
+          field: status
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: status
+          plugin_id: boolean
+          operator: '='
+          value: '1'
+          group: 1
+          exposed: true
+          expose:
+            operator_id: ''
+            label: Status
+            description: ''
+            use_operator: false
+            operator: status_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: status
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+          is_grouped: true
+          group_info:
+            label: 'Published status'
+            description: ''
+            identifier: status
+            optional: true
+            widget: select
+            multiple: false
+            remember: false
+            default_group: All
+            default_group_multiple: {  }
+            group_items:
+              1:
+                title: Published
+                operator: '='
+                value: '1'
+              2:
+                title: Unpublished
+                operator: '='
+                value: '0'
+        langcode:
+          id: langcode
+          table: node_field_data
+          field: langcode
+          relationship: none
+          group_type: group
+          admin_label: ''
+          entity_type: node
+          entity_field: langcode
+          plugin_id: language
+          operator: in
+          value: {  }
+          group: 1
+          exposed: true
+          expose:
+            operator_id: langcode_op
+            label: Language
+            description: ''
+            use_operator: false
+            operator: langcode_op
+            operator_limit_selection: false
+            operator_list: {  }
+            identifier: langcode
+            required: false
+            remember: false
+            multiple: false
+            remember_roles:
+              authenticated: authenticated
+            reduce: false
+          is_grouped: false
+          group_info: {  }
+      style:
+        type: table
+        options:
+          grouping: {  }
+          row_class: ''
+          default_row_class: true
+          columns:
+            views_bulk_operations_bulk_form: views_bulk_operations_bulk_form
+            title: title
+            type: type
+            langcode: langcode
+            field_seo_title: field_seo_title
+            field_seo_description: field_seo_description
+            changed: changed
+          default: changed
+          info:
+            views_bulk_operations_bulk_form:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            title:
+              sortable: true
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            type:
+              sortable: true
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            langcode:
+              sortable: true
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            field_seo_title:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            field_seo_description:
+              sortable: false
+              default_sort_order: asc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+            changed:
+              sortable: true
+              default_sort_order: desc
+              align: ''
+              separator: ''
+              empty_column: false
+              responsive: ''
+          override: true
+          sticky: true
+          summary: ''
+          empty_table: true
+          caption: ''
+          description: ''
+          class: ''
+      row:
+        type: fields
+        options:
+          default_field_elements: true
+          inline: {  }
+          separator: ''
+          hide_empty: false
+      query:
+        type: views_query
+        options: {  }
+      header:
+        area_text_custom:
+          id: area_text_custom
+          table: views
+          field: area_text_custom
+          plugin_id: text_custom
+          empty: true
+          content: 'Select the content whose SEO title or SEO description is missing, then choose a Generate action. Each row is one AI call, so a large selection takes a while. Values already filled in are left alone.'
+      display_extenders: {  }
+    cache_metadata:
+      max-age: 0
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - 'user.node_grants:view'
+        - user.permissions
+      tags:
+        - 'config:field.storage.node.field_seo_description'
+        - 'config:field.storage.node.field_seo_title'
+  page_1:
+    id: page_1
+    display_title: Page
+    display_plugin: page
+    position: 1
+    display_options:
+      display_extenders: {  }
+      path: admin/content/ai-seo-metatags
+      menu:
+        type: tab
+        title: 'AI SEO meta tags'
+        description: ''
+        weight: 10
+        expanded: false
+        menu_name: admin
+        parent: ''
+        context: '0'
+    cache_metadata:
+      max-age: 0
+      contexts:
+        - 'languages:language_content'
+        - 'languages:language_interface'
+        - url
+        - url.query_args
+        - 'user.node_grants:view'
+        - user.permissions
+      tags:
+        - 'config:field.storage.node.field_seo_description'
+        - 'config:field.storage.node.field_seo_title'

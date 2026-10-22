@@ -1,0 +1,43 @@
+{
+    "name": "drupal/varbase_ai_seo",
+    "description": "Generates the SEO title and SEO description of Varbase Blog posts and Utility pages with AI, on save and in bulk, feeding the meta title, meta description, Open Graph and Twitter card tags. Every path skips a node with an empty body. No custom PHP or shell code.",
+    "type": "drupal-recipe",
+    "keywords": [
+        "recipe",
+        "Varbase recipes",
+        "Drupal recipes",
+        "Varbase AI",
+        "Drupal AI",
+        "AI Automators",
+        "ECA",
+        "SEO",
+        "Metatag"
+    ],
+    "license": "GPL-2.0-or-later",
+    "homepage": "https://github.com/Vardot/varbase_ai_seo",
+    "authors": [
+        {
+            "name": "Vardot",
+            "homepage": "https://www.vardot.com",
+            "role": "Maintainer"
+        }
+    ],
+    "support": {
+        "issues": "https://github.com/Vardot/varbase_ai_seo/issues",
+        "source": "https://github.com/Vardot/varbase_ai_seo"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "require": {
+        "drupal/ai": "^1.4",
+        "drupal/ai_integration_eca": "^1.0@RC",
+        "drupal/core": "^11.4",
+        "drupal/eca": "^3.1",
+        "drupal/eca_vbo": "^2.2",
+        "drupal/metatag": "^2.2",
+        "drupal/modeler_api": "^1.0",
+        "drupal/varbase_ai_base": "~1.0.0",
+        "drupal/varbase_seo_base": "~1.0.0",
+        "drupal/views_bulk_operations": "^4.4"
+    }
+}

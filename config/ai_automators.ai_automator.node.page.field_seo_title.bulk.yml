@@ -1,0 +1,33 @@
+langcode: en
+status: true
+dependencies:
+  config:
+    - field.field.node.page.field_seo_title
+id: node.page.field_seo_title.bulk
+label: 'SEO title (page, bulk)'
+rule: llm_simple_string
+input_mode: token
+weight: 100
+worker_type: action
+entity_type: node
+bundle: page
+field_name: field_seo_title
+edit_mode: false
+base_field: ''
+prompt: ''
+token: "You write the SEO meta title for a page on [site:name].\n\nPage title: [node:title]\nPage content: [node:field_content]\n\nWrite one meta title that describes this page in a search engine result.\n\nRules:\n- Between 40 and 60 characters. Never longer than 60.\n- Sentence case. No quotation marks, no markdown, no trailing punctuation.\n- Do not include the site name. It is appended automatically.\n- Use the page's own words and tone. Do not invent facts, names, numbers or dates that are not in the content above.\n- Write in the language the page content is written in.\n\nReturn only the meta title, nothing else."
+guardrail_set_id: null
+plugin_config:
+  automator_enabled: true
+  automator_rule: llm_simple_string
+  automator_mode: token
+  automator_token: "You write the SEO meta title for a page on [site:name].\n\nPage title: [node:title]\nPage content: [node:field_content]\n\nWrite one meta title that describes this page in a search engine result.\n\nRules:\n- Between 40 and 60 characters. Never longer than 60.\n- Sentence case. No quotation marks, no markdown, no trailing punctuation.\n- Do not include the site name. It is appended automatically.\n- Use the page's own words and tone. Do not invent facts, names, numbers or dates that are not in the content above.\n- Write in the language the page content is written in.\n\nReturn only the meta title, nothing else."
+  automator_prompt: ''
+  automator_base_field: ''
+  automator_edit_mode: false
+  automator_weight: 100
+  automator_worker_type: action
+  automator_ai_provider: default
+  automator_ai_model: ''
+  automator_code_block_type: ''
+  automator_label: 'SEO title (bulk)'
