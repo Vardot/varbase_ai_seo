@@ -1,7 +1,7 @@
 [![Varbase](https://raw.githubusercontent.com/Vardot/varbase/11.0.x/images/varbase-logo.png)](https://www.drupal.org/project/varbase)
 
 # Varbase AI SEO
-[![Varbase AI SEO](https://img.shields.io/badge/Varbase%20AI%20SEO-1.0.x--dev-0d6efc?labelColor=001d38&style=flat-square)](https://www.drupal.org/project/varbase_ai_seo)
+[![Varbase AI SEO](https://img.shields.io/badge/Varbase%20AI%20SEO-1.0.0--alpha1-0d6efc?labelColor=001d38&style=flat-square)](https://www.drupal.org/project/varbase_ai_seo)
 
 An **opt-in** Drupal recipe that generates the **SEO title** and **SEO description** of Blog posts and
 Utility pages with AI: when a node is saved, and in bulk over existing content.

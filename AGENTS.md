@@ -25,5 +25,6 @@ GitHub repository is a mirror and takes no issues or pull requests.
 - Keep the ECA model's `dependencies.config` listing the node types and fields it uses: the strict comparison on
   re-apply depends on it.
 - No PHP in the repository, and no client's name, brand or terms in prompts or docs.
+- All configuration lives in `recipe.yml` and the recipe's own `config/`, never in `config/install` or `config/optional`.
 - Never bump the version or tag a release without explicit maintainer approval. Tags are three-segment (`1.0.0`)
   and are never moved once pushed.
