@@ -9,9 +9,8 @@ GitHub repository is a mirror and takes no issues or pull requests.
 
 ## Before you start
 
-- **`README.md`**: what the recipe ships, how generation is triggered, the guard, the comparison with
-  `ai_recipe_seo_optimizer`, and the AI Context follow-up.
-- **`CHANGELOG.md`** and **`docs/`** (proposed upstream issue text).
+- **Documentation** lives on the Varbase docs site: [docs.varbase.vardot.com](https://docs.varbase.vardot.com/developers/understanding-varbase/varbase-ai-recipes/varbase-ai-seo). Keep `README.md` short and link there; add no `docs/` folder.
+- **`CHANGELOG.md`**: what changed in each release, newest first.
 
 ## When you make a change
 
@@ -21,7 +20,7 @@ GitHub repository is a mirror and takes no issues or pull requests.
   every YAML file.
 - Add an entry under `## [Unreleased]` in `CHANGELOG.md`.
 - Keep every generation path behind the empty-body guard, `overwrite: false`, and automators as `worker_type: action`
-  (a direct automator runs even when disabled; see `docs/`).
+  (a direct automator runs even when disabled).
 - Keep the ECA model's `dependencies.config` listing the node types and fields it uses: the strict comparison on
   re-apply depends on it.
 - No PHP in the repository, and no client's name, brand or terms in prompts or docs.
