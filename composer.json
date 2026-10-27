@@ -2,7 +2,7 @@
     "name": "drupal/varbase_ai_seo",
     "description": "Generates the SEO title and SEO description of Varbase Blog posts and Utility pages with AI, on save and in bulk, feeding the meta title, meta description, Open Graph and Twitter card tags. Every path skips a node with an empty body. No custom PHP or shell code.",
     "type": "drupal-recipe",
-    "version": "1.0.x-dev",
+    "version": "1.0.0-beta1",
     "keywords": [
         "recipe",
         "Varbase recipes",
