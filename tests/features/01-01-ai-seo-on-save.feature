@@ -7,6 +7,8 @@ Feature: Varbase AI Recipe - AI SEO - Filled on save, never overwritten
   Background:
     Given I am a logged in user with the "Content editor" user
 
+  # Needs a real model's reply: the SEO title and description are written by AI.
+  @live-ai
   Scenario: Verify empty SEO fields of a blog post are written on save
     CI has no real RAG or vector database hosting: it uses only what the pipeline has and the free amazee.ai
     trial from Drupal CMS AI (thanks to amazee.ai). Saving waits for the AI to write the SEO fields, which took
