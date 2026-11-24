@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.0.0] - 2026-11-23
+### Changed
+- Change the default PHP version to PHP 8.5 in the GitLab CI ([#3638282](https://www.drupal.org/i/3638282)).
+- Update the version badge to `1.0.0` in `README.md`.
+
 ## [1.0.0-rc1] - 2026-11-15
 ### Changed
 - Update Node.js to >= 24.0 in the engines and CI, and run CI on Drupal core 11.4.11 ([#3635723](https://www.drupal.org/i/3635723)).
@@ -35,7 +40,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 - The GitHub Actions workflows and the `.github` templates: CI runs on git.drupalcode.org.
 
-[Unreleased]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0-rc1...1.0.x
+[Unreleased]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0...1.0.x
+[1.0.0]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0-rc1...1.0.0
 [1.0.0-rc1]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0-beta2...1.0.0-rc1
 [1.0.0-beta2]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0-beta1...1.0.0-beta2
 [1.0.0-beta1]: https://git.drupalcode.org/project/varbase_ai_seo/-/compare/1.0.0-alpha1...1.0.0-beta1
